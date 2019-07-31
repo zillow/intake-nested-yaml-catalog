@@ -1,0 +1,19 @@
+# global published catalog
+entity:
+    description: "description1"
+    property:
+      clean_attributes:
+        args:
+          urlpath: s3://foo
+        driver: parquet
+      zestimate_project:
+        zestimate:
+          args:
+            urlpath: '{{ CATALOG_DIR }}/zestimate.csv'
+          description: zestimate description
+          driver: csv
+    user:
+      user_profile:
+        args:
+          urlpath: s3://foo
+        driver: parquet

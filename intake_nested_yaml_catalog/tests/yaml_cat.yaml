@@ -1,0 +1,32 @@
+# global published catalog
+sources:
+  entity:
+    description: description1
+    driver: yaml_cat
+    metadata:
+      sources:
+        property:
+          driver: yaml_cat
+          metadata:
+            sources:
+              clean_attributes:
+                args:
+                  urlpath: s3://foo
+                driver: parquet
+              zestimate_project:
+                driver: yaml_cat
+                metadata:
+                  sources:
+                    zestimate:
+                      args:
+                        urlpath: '{{ CATALOG_DIR }}/zestimate.csv'
+                      description: zestimate description
+                      driver: csv
+        user:
+          driver: yaml_cat
+          metadata:
+            sources:
+              user_profile:
+                args:
+                  urlpath: s3://foo
+                driver: parquet
