@@ -1,29 +1,29 @@
 # global published catalog
 sources:
   entity:
-    description: description1
-    driver: yaml_cat
+    description: description
+    driver: yaml_nested_cat_desugared
     metadata:
       sources:
-        property:
-          driver: yaml_cat
+        customer:
+          driver: yaml_nested_cat_desugared
           metadata:
             sources:
-              clean_attributes:
+              customer_attributes:
                 args:
                   urlpath: s3://foo
                 driver: parquet
-              zestimate_project:
-                driver: yaml_cat
+              retention_project:
+                driver: yaml_nested_cat_desugared
                 metadata:
                   sources:
-                    zestimate:
+                    good_customers:
                       args:
-                        urlpath: '{{ CATALOG_DIR }}/zestimate.csv'
-                      description: zestimate description
+                        urlpath: '{{ CATALOG_DIR }}/good_customers.csv'
+                      description: good_customers description
                       driver: csv
         user:
-          driver: yaml_cat
+          driver: yaml_nested_cat_desugared
           metadata:
             sources:
               user_profile:

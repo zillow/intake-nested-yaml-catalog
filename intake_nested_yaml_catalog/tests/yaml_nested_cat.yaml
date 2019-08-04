@@ -1,16 +1,16 @@
 # global published catalog
 entity:
-    description: "description1"
-    property:
-      clean_attributes:
+    description: "description"
+    customer:
+      customer_attributes:
         args:
           urlpath: s3://foo
         driver: parquet
-      zestimate_project:
-        zestimate:
+      retention_project:
+        good_customers:
           args:
-            urlpath: '{{ CATALOG_DIR }}/zestimate.csv'
-          description: zestimate description
+            urlpath: '{{ CATALOG_DIR }}/good_customers.csv'
+          description: good_customers description
           driver: csv
     user:
       user_profile:

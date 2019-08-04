@@ -1,52 +1,56 @@
 from pathlib import Path
-from unittest import TestCase
 
 import intake
 import yaml
+from intake import registry
 
-from intake_nested_yaml_catalog.nested_yaml_catalog import YAMLFileNestedCatalog, to_yaml_cat, \
-    to_yaml_nested_cat  # noqa: F401
+from intake_nested_yaml_catalog.nested_yaml_catalog import YAMLFileNestedCatalog, \
+    to_yaml_nested_cat, to_yaml_nested_cat_desugared  # noqa: F401
+
+yaml_nested_cat_path = str(Path(__file__).resolve().parent.joinpath(Path("yaml_nested_cat.yaml")))
+
+registry
 
 
-class IntakeTest(TestCase):
-    def test_intake_yaml_cat(self):
-        catalog_path = str(Path(__file__).resolve().parent.joinpath(Path("yaml_cat.yaml")))
-        cat = intake.Catalog(catalog_path)
-        self.assertEqual('description1', cat.entity.description)
-        self.assertEqual(['property', 'user'], list(cat.entity))
-        self.assertEqual(['clean_attributes', 'zestimate_project'], list(cat.entity.property))
+def test_intake_yaml_cat():
+    catalog_path = str(Path(__file__).resolve().parent.joinpath(Path("yaml_cat.yaml")))
+    cat = intake.Catalog(catalog_path)
+    assert 'description' == cat.entity.description
+    assert ['customer', 'user'] == list(cat.entity)
+    assert ['customer_attributes', 'retention_project'] == list(cat.entity.customer)
 
-        self.validate_zestimate(cat)
+    validate_retention_project(cat)
 
-    def test_intake_yaml_config_values(self):
-        catalog_path = str(Path(__file__).resolve().parent.joinpath(Path("yaml_nested_cat.yaml")))
-        cat = intake.Catalog(catalog_path)
-        self.assertEqual(['property', 'user'], list(cat.entity))
-        self.assertEqual(['clean_attributes', 'zestimate_project'], list(cat.entity.property))
+def test_intake_yaml_nested():
+    cat = intake.open_yaml_nested_cat(yaml_nested_cat_path)
+    assert ['customer', 'user'] == list(cat.entity)
+    assert ['customer_attributes', 'retention_project'] == list(cat.entity.customer)
 
-        self.validate_zestimate(cat)
+    validate_retention_project(cat)
 
-    def validate_zestimate(self, cat):
-        entry_description = cat.entity.property.zestimate_project.zestimate.describe()
-        self.assertEqual('zestimate', entry_description['name'])
-        self.assertEqual('zestimate description', entry_description['description'])
+def test_version():
+    cat = intake.open_yaml_nested_cat(yaml_nested_cat_path)
+    assert cat.version != ''
 
-        zestimate_discover = cat.entity.property.zestimate_project.zestimate.discover()
-        self.assertEqual(set(zestimate_discover['dtype'].keys()), {'zpid', 'zestimate'})
+def validate_retention_project(cat):
+    entry_description = cat.entity.customer.retention_project.good_customers.describe()
+    assert 'good_customers' == entry_description['name']
+    assert 'good_customers description' == entry_description['description']
 
-        df = cat.entity.property.zestimate_project.zestimate.read()
-        self.assertListEqual([101, 400302], df.loc[0].values.tolist())
+    discover = cat.entity.customer.retention_project.good_customers.discover()
+    assert discover['dtype'].keys() == {'customer_id', 'name'}
 
-    def test_catalog_transformation_inverse_relationship(self):
-        """
-        Tests that "yaml_nested_cat -> yaml_cat -> yaml_nested_cat" transformations work
-        """
-        nested_catalog = YAMLFileNestedCatalog(
-            str(Path(__file__).resolve().parent.joinpath(Path("yaml_nested_cat.yaml"))))
+    df = cat.entity.customer.retention_project.good_customers.read()
+    assert [101, 'Bob'] == df.loc[0].values.tolist()
 
-        yaml_nested_dict = yaml.safe_load(nested_catalog.entity.yaml())
+def test_catalog_transformation_inverse_relationship():
+    """
+    Tests that "yaml_nested_cat -> yaml_cat -> yaml_nested_cat" transformations work
+    """
+    nested_catalog = YAMLFileNestedCatalog(yaml_nested_cat_path)
 
-        self.assertDictEqual(
-            yaml_nested_dict,
-            to_yaml_nested_cat(to_yaml_cat(yaml_nested_dict), '')  # test to yaml_cat and back to yaml_nested
-        )
+    yaml_nested_dict = yaml.safe_load(nested_catalog.entity.yaml())
+
+    assert yaml_nested_dict == to_yaml_nested_cat(
+        to_yaml_nested_cat_desugared(yaml_nested_dict),
+        '')  # test to yaml_cat and back to yaml_nested
