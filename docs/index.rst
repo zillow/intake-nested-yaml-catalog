@@ -10,6 +10,8 @@ single YAML hierarchical catalog to organize datasets and avoid a data swamp.
 
 .. code-block:: yaml
 
+    metadata:
+      hierarchical_catalog: true  # required entry!
     entity:
         description: "description"
         customer:
