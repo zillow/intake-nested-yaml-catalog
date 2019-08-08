@@ -1,5 +1,6 @@
+# testing missing hierarchical_catalog
 metadata:
-  hierarchical_catalog: true
+  foo: fee
 entity:
     description: "description"
     customer:

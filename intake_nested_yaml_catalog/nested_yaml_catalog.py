@@ -65,7 +65,6 @@ def to_yaml_nested_cat_helper(yaml_nested_cat_desugared: dict, cls_name: str):
     return ret
 
 
-
 class YAMLFileNestedCatalogDesugared(YAMLFileCatalog):
     """
     Catalog as described by a single YAML file with hierarchy.
@@ -84,6 +83,8 @@ class YAMLFileNestedCatalogDesugared(YAMLFileCatalog):
                 args:
                   urlpath: s3://foo
                 driver: parquet
+
+      >>> cat.user.user_profile.read()
     """
 
     version = vcver.get_version()
@@ -97,7 +98,6 @@ class YAMLFileNestedCatalogDesugared(YAMLFileCatalog):
     def _load(self, reload=False):
         self._dir = self.metadata['catalog_dir']
         text = yaml.dump(self.metadata, default_flow_style=False)
-        self._yaml_text = text
 
         # Reuse default YAMLFileCatalog YAML parser
         # parse() does the heavy lifting of loading the catalog
@@ -179,6 +179,9 @@ class YAMLFileNestedCatalog(YAMLFileCatalog):
         except ValidationError:
             # Try to parse as a nested Catalog by
             # transforming it to yaml_nested_cat_desugared format.
+            assert 'metadata' in data
+            assert 'hierarchical_catalog' in data['metadata']
+            assert data['metadata']['hierarchical_catalog']
             transformed_data = to_yaml_nested_cat_desugared(data)
             transformed_text = yaml.dump(transformed_data, default_flow_style=False)
             super().parse(transformed_text)
