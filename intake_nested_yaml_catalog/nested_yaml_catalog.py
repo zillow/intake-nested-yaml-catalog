@@ -179,9 +179,10 @@ class YAMLFileNestedCatalog(YAMLFileCatalog):
         except ValidationError:
             # Try to parse as a nested Catalog by
             # transforming it to yaml_nested_cat_desugared format.
-            assert 'metadata' in data
-            assert 'hierarchical_catalog' in data['metadata']
-            assert data['metadata']['hierarchical_catalog']
+            assert_msg = "yaml_nested_cat requires a `hierarchical_catalog: true` metadata entry"
+            assert 'metadata' in data, assert_msg
+            assert 'hierarchical_catalog' in data['metadata'], assert_msg
+            assert data['metadata']['hierarchical_catalog'], assert_msg
             transformed_data = to_yaml_nested_cat_desugared(data)
             transformed_text = yaml.dump(transformed_data, default_flow_style=False)
             super().parse(transformed_text)
