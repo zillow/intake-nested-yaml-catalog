@@ -34,8 +34,7 @@ setup(
     python_requires=">=3.6",
     entry_points={
         'intake.drivers': [
-            'yaml_nested_cat = intake_nested_yaml_catalog.nested_yaml_catalog:YAMLFileNestedCatalog',
-            'yaml_nested_cat_desugared = intake_nested_yaml_catalog.nested_yaml_catalog:YAMLFileNestedCatalogDesugared',
+            'nested_yaml_cat = intake_nested_yaml_catalog.nested_yaml_catalog:NestedYAMLFileCatalog',
         ]
     },
 )

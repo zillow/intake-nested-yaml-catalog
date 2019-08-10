@@ -1,0 +1,14 @@
+name: name_in_spec
+description: This is a catalog with a description in the yaml
+metadata:
+  some: thing
+  hierarchical_catalog: True
+plugins:
+  source:
+    - module: intake.catalog.tests.example1_source
+level1:
+  level2:
+    use_example1:
+      description: example1 source plugin
+      driver: example1
+      args: {}
