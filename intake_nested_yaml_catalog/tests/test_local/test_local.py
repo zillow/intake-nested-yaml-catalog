@@ -89,8 +89,8 @@ def test_nested(catalog1):
 
     assert 'level1.level2.nested' not in catalog1.walk(depth=2)
     assert 'level1.level2.nested' in catalog1.walk(depth=3)
-    assert catalog1.level1.level2.nested._catalog == catalog1.level1.level2
-    assert catalog1.level1.level2.nested.cat == catalog1.level1.level2
+    assert catalog1.level1.level2.nested._catalog == catalog1.level1.level2()  # instantiate entry making it a catalog!
+    assert catalog1.level1.level2.nested.cat == catalog1.level1.level2()
     assert catalog1.level1.level2.cat.cat is catalog1
     assert catalog1.level1.level2.nested.cat.cat.cat is catalog1
     assert catalog1.level1.level2.nested.level1.level2.nested().cat.cat.cat.cat.cat.cat is catalog1
@@ -111,7 +111,7 @@ def test_hash(catalog1):
 def test_getitem(catalog1):
     assert list(catalog1) == list(catalog1.level1.level2['nested']())
     assert list(catalog1) == list(catalog1.level1.level2['nested.level1.level2.nested']())
-    assert list(catalog1) == list(catalog1.level1.level2['nested', 'nested']())
+    assert list(catalog1) == list(catalog1.level1.level2['nested', 'level1', 'level2', 'nested']())
 
 
 def test_source_plugin_config(catalog1):

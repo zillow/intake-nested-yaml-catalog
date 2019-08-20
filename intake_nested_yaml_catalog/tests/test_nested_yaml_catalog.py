@@ -10,8 +10,6 @@ def test_intake_nested_yaml_cat():
     cat = intake.open_nested_yaml_cat(nested_yaml_cat_path)
     assert {'customer', 'user'} == set(cat.entity)
     assert {'customer_attributes', 'retention_project'} == set(cat.entity.customer)
-
-
     assert 'description' == cat.entity.description
 
     entry_description = cat.entity.customer.retention_project.good_customers.describe()
@@ -45,3 +43,10 @@ def test_nested_cat_walk():
     cat = intake.open_nested_yaml_cat(nested_yaml_cat_path)
     assert 'entity.customer.retention_project.good_customers' not in list(cat.walk(depth=3))
     assert 'entity.customer.retention_project.good_customers' in list(cat.walk(depth=4))
+
+
+def test_gui():
+    pytest.importorskip('panel')
+    cat = intake.open_nested_yaml_cat(nested_yaml_cat_path)
+    assert repr(intake.gui).startswith('Row')
+    intake.gui.add(cat)
