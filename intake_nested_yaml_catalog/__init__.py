@@ -1,1 +1,0 @@
-from intake_nested_yaml_catalog.nested_yaml_catalog import NestedYAMLFileCatalog
