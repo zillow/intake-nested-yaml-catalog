@@ -1,0 +1,25 @@
+metadata:
+  hierarchical_catalog: true
+entity:
+  description: "description"
+  customer:
+    customer_attributes:
+      args:
+        urlpath: s3://foo
+      driver: parquet
+    retention_project:
+      good_customers:
+        args:
+          urlpath: '{{ CATALOG_DIR }}/{{ kind }}_customers.csv'
+        description: good_customers description
+        driver: csv
+        parameters:
+          kind:
+            description: good or bad
+            type: str
+            default: good
+  user:
+    user_profile:
+      args:
+        urlpath: s3://foo
+      driver: parquet

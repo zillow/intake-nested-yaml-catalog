@@ -1,0 +1,21 @@
+# testing missing hierarchical_catalog
+metadata:
+  foo: fee
+entity:
+    description: "description"
+    customer:
+      customer_attributes:
+        args:
+          urlpath: s3://foo
+        driver: parquet
+      retention_project:
+        good_customers:
+          args:
+            urlpath: '{{ CATALOG_DIR }}/good_customers.csv'
+          description: good_customers description
+          driver: csv
+    user:
+      user_profile:
+        args:
+          urlpath: s3://foo
+        driver: parquet

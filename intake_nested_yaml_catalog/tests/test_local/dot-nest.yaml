@@ -1,0 +1,27 @@
+metadata:
+  hierarchical_catalog: True
+level1:
+  self:
+    description: this cat
+    driver: nested_yaml_cat
+    args:
+      path: "{{CATALOG_DIR}}/dot-nest.yaml"
+  selfdot.dot:
+    description: this cat
+    driver: nested_yaml_cat
+    args:
+      path: "{{CATALOG_DIR}}/dot-nest.yaml"
+  self.dot:
+    description: this cat
+    driver: nested_yaml_cat
+    args:
+      path: "{{CATALOG_DIR}}/dot-nest.yaml"
+  leaf:
+    description: leaf
+    driver: csv
+  leafdot.dot:
+    description: leaf-dot
+    driver: csv
+  leaf.dot:
+    description: leaf-dot
+    driver: csv

@@ -1,0 +1,8 @@
+[run]
+omit = intake_nested_yaml_catalog/tests/*
+
+[report]
+# Minimum unit test coverage percentage to pass ./uranium test.
+fail_under = 70
+omit =
+    intake_nested_yaml_catalog/_version.py

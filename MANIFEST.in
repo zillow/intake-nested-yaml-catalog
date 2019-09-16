@@ -1,0 +1,3 @@
+include VERSION
+include README.rst
+recursive-include intake_nested_yaml_catalog/docs/*

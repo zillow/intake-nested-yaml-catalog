@@ -1,0 +1,4 @@
+[flake8]
+max-line-length=120
+max-complexity=8
+exclude = intake_nested_yaml_catalog/_version.py
