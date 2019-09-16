@@ -1,133 +1,38 @@
-import copy
-from pathlib import Path
+from typing import List, Dict
 
 import vcver
-import yaml
+from intake import Catalog
+from intake.catalog import exceptions
+from intake.catalog.entry import CatalogEntry
 from intake.catalog.exceptions import ValidationError
-from intake.catalog.local import YAMLFileCatalog
+from intake.catalog.local import YAMLFileCatalog, CatalogParser, LocalCatalogEntry
 from intake.utils import yaml_load
-from deepmerge import always_merger
 
 
-def to_yaml_nested_cat_desugared(yaml_nested_cat: dict):
-    """
-    Converts from yaml_nested_cat structure to yaml_nested_cat_desugared structure.
-    """
-    return dict(sources=to_yaml_nested_cat_desugared_helper(copy.deepcopy(yaml_nested_cat)))
+class NestedCatalogEntry(LocalCatalogEntry):
+    def __init__(self, entries: Dict[str, CatalogEntry], name, description, metadata):
+        self.entries: Dict[str, CatalogEntry] = entries
+        self.description = description
+        self.metadata = metadata
+        super(NestedCatalogEntry, self).__init__(name, description, NestedYAMLFileCatalog.name, metadata=metadata)
+
+    def get(self, **user_parameters):
+        """Instantiate the NestedCatalogEntry"""
+        if not self._default_source:
+            self._default_source = Catalog.from_dict(
+                entries=self.entries,
+                name=self.name,
+                metadata=self.metadata,
+                description=self.description,
+                **user_parameters)
+            self._default_source.cat = self._catalog
+            self._default_source.catalog_object = self._catalog
+        return self._default_source
 
 
-def to_yaml_nested_cat_desugared_helper(yaml_nested_cat: dict):
-    for key, value in yaml_nested_cat.items():
-        if isinstance(value, dict) and 'driver' not in value:
-            # This becomes a YAMLFileNestedCatalogDesugared, a step in the taxonomy
-            description = value.pop('description', None)
-            new_sources = to_yaml_nested_cat_desugared_helper(value)
-            yaml_nested_cat[key] = dict(
-                driver='yaml_nested_cat_desugared',
-                metadata=dict(sources=new_sources)
-            )
-            if description:
-                yaml_nested_cat[key]['description'] = description
-    return yaml_nested_cat
-
-
-def to_yaml_nested_cat(yaml_nested_cat_desugared: dict, cls_name: str):
-    """
-    Converts from yaml_nested_cat_desugared structure to yaml_nested_cat structure.
-    """
-    # unwind the first 'sources'
-    return to_yaml_nested_cat_helper(yaml_nested_cat_desugared['sources'], cls_name)
-
-
-def to_yaml_nested_cat_helper(yaml_nested_cat_desugared: dict, cls_name: str):
-    ret = {}
-    for key, value in yaml_nested_cat_desugared.items():
-        if 'driver' in value and (
-                value['driver'] == YAMLFileNestedCatalogDesugared.name or value['driver'] == cls_name):
-            # unwind this entry
-            node = copy.deepcopy(value)
-            del node['driver']
-            nested = to_yaml_nested_cat_helper(node['metadata']['sources'], cls_name)
-            # new_node = {**node, **nested}
-            new_node = always_merger.merge(node, nested)
-
-            # cleanup
-            del new_node['metadata']['sources']
-            for k in list(node):
-                if new_node[k] == {}:
-                    del new_node[k]
-
-            ret[key] = new_node
-        else:
-            ret[key] = value
-
-    # clean up empty dicts
-    return ret
-
-
-class YAMLFileNestedCatalogDesugared(YAMLFileCatalog):
+class NestedYAMLFileCatalog(YAMLFileCatalog):
     """
     Catalog as described by a single YAML file with hierarchy.
-    The catalog entries are defined within `metadata`.
-
-    The format of this YAML is hard to work with but lends to simple reuse of YAMLFileCatalog parse().
-    YAMLFileNestedCatalog is a syntactic sugar translator to this hard to use format.
-
-    Example:
-      sources:
-        user:
-          driver: yaml_nested_cat_desugared
-          metadata:
-            sources:
-              user_profile:
-                args:
-                  urlpath: s3://foo
-                driver: parquet
-
-      >>> cat.user.user_profile.read()
-    """
-
-    version = vcver.get_version()
-    container = 'catalog'
-    partition_access = None
-    name = 'yaml_nested_cat_desugared'
-
-    def __init__(self, **kwargs):
-        super(YAMLFileNestedCatalogDesugared, self).__init__(path=kwargs.get("name", ""), **kwargs)
-
-    def _load(self, reload=False):
-        self._dir = self.metadata['catalog_dir']
-        text = yaml.dump(self.metadata, default_flow_style=False)
-
-        # Reuse default YAMLFileCatalog YAML parser
-        # parse() does the heavy lifting of loading the catalog
-        super().parse(text)
-
-    def yaml(self, with_plugin=False):
-        """Return YAML representation of this data-source
-
-        The output may be roughly appropriate for inclusion in a YAML
-        catalog. This is a best-effort implementation
-
-        Parameters
-        ----------
-        with_plugin: bool
-            If True, create a "plugins" section, for cases where this source
-            is created with a plugin not expected to be in the global Intake
-            registry.
-        """
-        from yaml import dump
-        data = self._yaml(with_plugin=with_plugin)
-
-        # convert back to syntactic sugar of yaml_nested_cat
-        yaml_nested_cat = to_yaml_nested_cat(data, self.classname)
-        return dump(yaml_nested_cat, default_flow_style=False)
-
-
-class YAMLFileNestedCatalog(YAMLFileCatalog):
-    """
-    Catalog as described by a single YAML file with hierarchy.
-    This is syntactic sugar of `YAMLFileNestedCatalogDesugared`.
     Example:
     ```
         entity:
@@ -144,13 +49,13 @@ class YAMLFileNestedCatalog(YAMLFileCatalog):
                 driver: parquet
     ```
 
-    Clean_attributes can be accessed as such:
+    customer_attributes can be accessed as such:
     >>> catalog.entity.customer.customer_attributes.describe()
     """
     version = vcver.get_version()
     container = 'catalog'
     partition_access = None
-    name = 'yaml_nested_cat'
+    name = 'nested_yaml_cat'
 
     def __init__(self, path, autoreload=True, **kwargs):
         """
@@ -165,7 +70,9 @@ class YAMLFileNestedCatalog(YAMLFileCatalog):
         self.path = path
         self.text = None
         self.autoreload = autoreload  # set this to False if don't want reloads
-        super(YAMLFileNestedCatalog, self).__init__(path, autoreload, **kwargs)
+        self._kwargs = kwargs
+        if path != 'none':
+            super(NestedYAMLFileCatalog, self).__init__(path, autoreload, **kwargs)
 
     def parse(self, text):
         self.text = text
@@ -178,11 +85,46 @@ class YAMLFileNestedCatalog(YAMLFileCatalog):
             super().parse(text)
         except ValidationError:
             # Try to parse as a nested Catalog by
-            # transforming it to yaml_nested_cat_desugared format.
-            assert_msg = "yaml_nested_cat requires a `hierarchical_catalog: true` metadata entry"
+            assert_msg = "nested_yaml_cat requires a `hierarchical_catalog: true` metadata entry"
             assert 'metadata' in data, assert_msg
             assert 'hierarchical_catalog' in data['metadata'], assert_msg
             assert data['metadata']['hierarchical_catalog'], assert_msg
-            transformed_data = to_yaml_nested_cat_desugared(data)
-            transformed_text = yaml.dump(transformed_data, default_flow_style=False)
-            super().parse(transformed_text)
+
+            entry = self._create_nested_catalog(self.name, data)
+            self._entries = entry.entries
+            self.metadata = self.metadata or entry.metadata
+            self.name = entry.name or self.name_from_path
+            self.description = self.description or entry.description
+
+    def _create_nested_catalog(self, name: str, nested_yaml_cat: dict) -> NestedCatalogEntry:
+        # Validate and parse level_sources
+        catalog_fields = ['metadata', 'plugins', 'args', 'cache']
+        level_sources = {
+            'sources': {k: v for k, v in nested_yaml_cat.items()
+                        if isinstance(v, dict) and 'driver' in v},
+            **{k: v for k, v in nested_yaml_cat.items()
+               if not isinstance(v, dict) or k in catalog_fields}  # for (description, metadata, etc) fields
+        }
+
+        context = dict(root=self._dir)
+        parsed_catalog = CatalogParser(level_sources, context=context, getenv=self.getenv, getshell=self.getshell)
+        if parsed_catalog.errors:
+            raise exceptions.ValidationError(
+                "Catalog '{}' has validation errors:\n\n{}".format(self.path, "\n".join(parsed_catalog.errors)),
+                parsed_catalog.errors)
+
+        # list of catalogs at this level
+        level_catalogs: List[LocalCatalogEntry] = [
+            self._create_nested_catalog(k, v)  # recursive call!
+            for k, v in nested_yaml_cat.items()
+            if k not in catalog_fields and isinstance(v, dict) and 'driver' not in v
+        ]
+
+        return NestedCatalogEntry(
+            entries={
+                **{c.name: c for c in level_catalogs},
+                **{entry.name: entry for entry in parsed_catalog.data['data_sources']}
+            },
+            name=name or parsed_catalog.data.get('name'),
+            metadata=parsed_catalog.data.get('metadata', {}),
+            description=parsed_catalog.data.get('description', None))
