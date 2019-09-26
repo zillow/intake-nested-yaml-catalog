@@ -12,7 +12,6 @@ Example of organizing the datasets by business domain entities:
     metadata:
       hierarchical_catalog: true
     entity:
-      description: "description"
       customer:
         customer_attributes:
           args:
