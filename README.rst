@@ -1,3 +1,13 @@
+.. image:: https://travis-ci.org/zillow/intake-nested-yaml-catalog.svg?branch=master
+    :target: https://travis-ci.org/zillow/intake-nested-yaml-catalog
+
+.. image:: https://coveralls.io/repos/github/zillow/intake-nested-yaml-catalog/badge.svg?branch=master
+    :target: https://coveralls.io/github/zillow/intake-nested-yaml-catalog?branch=master
+
+.. image:: https://readthedocs.org/projects/intake-nested-yaml-catalog/badge/?version=latest
+    :target: https://intake-nested-yaml-catalog.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
 Welcome to Intake plugin for nested YAML catalogs
 ==================================================
 
