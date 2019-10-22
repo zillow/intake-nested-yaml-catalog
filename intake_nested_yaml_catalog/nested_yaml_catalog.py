@@ -1,12 +1,12 @@
 from typing import List, Dict
 
-import vcver
 from intake import Catalog
 from intake.catalog import exceptions
 from intake.catalog.entry import CatalogEntry
 from intake.catalog.exceptions import ValidationError
 from intake.catalog.local import YAMLFileCatalog, CatalogParser, LocalCatalogEntry
 from intake.utils import yaml_load
+import pkg_resources
 
 
 class NestedCatalogEntry(LocalCatalogEntry):
@@ -52,7 +52,7 @@ class NestedYAMLFileCatalog(YAMLFileCatalog):
     customer_attributes can be accessed as such:
     >>> catalog.entity.customer.customer_attributes.describe()
     """
-    version = vcver.get_version()
+    version = pkg_resources.get_distribution("intake-nested-yaml-catalog").version
     container = 'catalog'
     partition_access = None
     name = 'nested_yaml_cat'
